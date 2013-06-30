@@ -3,7 +3,7 @@ package net.briandupreez.pci.chapter4;
 import java.util.regex.Pattern;
 
 /**
- * Created with IntelliJ IDEA.
+ * NodeConstants.
  * User: bdupreez
  * Date: 2013/06/23
  * Time: 9:08 AM

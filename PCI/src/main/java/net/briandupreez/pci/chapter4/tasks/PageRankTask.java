@@ -16,7 +16,7 @@ import java.util.Map;
 import java.util.concurrent.Callable;
 
 /**
- * Created with IntelliJ IDEA.
+ * PageRankTask.
  * User: bdupreez
  * Date: 2013/06/25
  * Time: 7:23 PM
@@ -69,15 +69,11 @@ public class PageRankTask extends SearchTask implements Callable<TaskResponse> {
         {
             while (pageIterator.hasNext()) {
                 final Node node = pageIterator.next();
-                final String url = node.getProperty(NodeConstants.URL).toString();
-                //System.out.println("Pages: " + url);
-
                 final Iterator<Relationship> relationshipIterator = node.getRelationships().iterator();
                 while (relationshipIterator.hasNext()) {
 
                     final Relationship relationship = relationshipIterator.next();
                     final String source = relationship.getProperty(NodeConstants.SOURCE).toString();
-                    //System.out.println("source: " + source);
                     uniqueUrls.put(source, 0.0);
                     final String destination = relationship.getProperty(NodeConstants.DESTINATION).toString();
                     g.addEdge(String.valueOf(node.getId()), source, destination, true);
@@ -86,35 +82,21 @@ public class PageRankTask extends SearchTask implements Callable<TaskResponse> {
             }
         }
 
-/*        final Iterator<Node> nodeIterator = result.columnAs("related");
-        while (nodeIterator.hasNext()) {
-            final Node node = nodeIterator.next();
-            final String url = node.getProperty(NodeConstants.URL).toString();
-
-            final Iterator<Relationship> relationshipIterator = node.getRelationships().iterator();
-            while (relationshipIterator.hasNext()) {
-
-                final Relationship relationship = relationshipIterator.next();
-                final String source = relationship.getProperty(NodeConstants.SOURCE).toString();
-                System.out.println("source: " + source);
-                final String destination = relationship.getProperty(NodeConstants.DESTINATION).toString();
-                g.addEdge(String.valueOf(node.getId()), source, destination, true);
-
-            }
-
-        }*/
-
         computeAndSetPageRankScores(uniqueUrls, g);
         return uniqueUrls;
     }
 
+    /**
+     * Compute score
+     * @param uniqueUrls urls
+     * @param graph the graph of all links
+     */
     private void computeAndSetPageRankScores(final Map<String, Double> uniqueUrls, final Graph graph) {
         final PageRank pr = new PageRank();
         pr.init(graph);
         pr.compute();
 
         for (final Map.Entry<String, Double> entry : uniqueUrls.entrySet()) {
-            System.out.println("page:" + entry.getKey());
             final double score = 100 * pr.getRank(graph.getNode(entry.getKey()));
             entry.setValue(score);
         }

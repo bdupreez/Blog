@@ -6,7 +6,7 @@ import org.neo4j.cypher.javacompat.ExecutionResult;
 import org.neo4j.graphdb.GraphDatabaseService;
 
 /**
- * Created with IntelliJ IDEA.
+ * SearchTask.
  * User: bdupreez
  * Date: 2013/06/24
  * Time: 9:12 PM
@@ -37,8 +37,8 @@ public class SearchTask {
     /**
       * Format array of strings for in statement
       *
-      * @param args
-      * @return
+      * @param args array to format
+      * @return formatted string
       */
      protected String formatArray(final String... args) {
          final String format = new String(new char[args.length]).replace("\0", "'%s',");

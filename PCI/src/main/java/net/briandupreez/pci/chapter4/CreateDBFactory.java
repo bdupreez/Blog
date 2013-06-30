@@ -28,7 +28,6 @@ public class CreateDBFactory {
                     config.put("neostore.nodestore.db.mapped_memory", "50M");
                     config.put("string_block_size", "60");
                     config.put("array_block_size", "300");
-                    //config.put("read_only", "true");
                     graphDb = new GraphDatabaseFactory()
                             .newEmbeddedDatabaseBuilder(RESOURCES_CRAWL_DB)
                             .setConfig(config)

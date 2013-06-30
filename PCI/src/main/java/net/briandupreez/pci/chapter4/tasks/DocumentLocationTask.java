@@ -51,19 +51,18 @@ public class DocumentLocationTask extends SearchTask implements Callable<TaskRes
 
               for (final Map.Entry<String, Object> entry : row.entrySet()) {
                   final Iterator<String> iter = ((Node) entry.getValue()).getPropertyKeys().iterator();
-
                   while (iter.hasNext()) {
                       final String nextVal = iter.next();
                       if (NodeConstants.URL.equals(nextVal)) {
                           currentURL = ((Node) entry.getValue()).getProperty(nextVal).toString();
-                          //System.out.println("URL: " + currentURL);
+
                       } else if (NodeConstants.WORD.equals(nextVal)) {
                           double index = Double.parseDouble (((Node) entry.getValue()).getProperty(NodeConstants.INDEX).toString());
                           index = index == 0.0 ? 1 : index;
                           if(index < smallestIndex){
                             smallestIndex = index;
                           }
-                          //System.out.println("Word: " + ((Node) entry.getValue()).getProperty(NodeConstants.WORD).toString() + " Index: " + index + " Smallest: " + smallestIndex);
+
                       }
                   }
 

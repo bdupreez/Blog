@@ -5,7 +5,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA.
+ * NormalizationFunctions.
  * User: bdupreez
  * Date: 2013/06/23
  * Time: 6:32 PM

@@ -3,7 +3,7 @@ package net.briandupreez.pci.chapter4.tasks;
 import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA.
+ * TaskResponse.
  * User: bdupreez
  * Date: 2013/06/24
  * Time: 9:26 PM

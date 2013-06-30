@@ -24,7 +24,7 @@ public class FeedReaderMain {
         final FeedReaderMain feedReaderMain = new FeedReaderMain();
         try {
             feedReaderMain.run();
-        } catch (IOException e) {
+        } catch (final IOException e) {
             e.printStackTrace();
         }
     }

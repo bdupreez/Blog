@@ -173,6 +173,10 @@ public class NeuralNetworkTask extends SearchTask implements Callable<TaskRespon
         return dataSet;
     }
 
+    /**
+     * Create input data
+     * @return input
+     */
     private MLData createInputData() {
 
         //this.searchTerms;

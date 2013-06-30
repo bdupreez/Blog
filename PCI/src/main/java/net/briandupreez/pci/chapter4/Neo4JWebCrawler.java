@@ -21,6 +21,9 @@ public class Neo4JWebCrawler extends WebCrawler {
     private final GraphDatabaseService graphDb;
 
 
+    /**
+     * Constructor.
+     */
     public Neo4JWebCrawler() {
         this.graphDb = CreateDBFactory.createInMemoryDB();
     }

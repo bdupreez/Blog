@@ -1,0 +1,11 @@
+http://blog.guykawasaki.com/index.rdf
+http://blog.outer-court.com/rss.xml
+http://flagrantdisregard.com/index.php/feed/
+http://gizmodo.com/index.xml
+http://googleblog.blogspot.com/rss.xml
+http://radar.oreilly.com/index.rdf
+http://www.wired.com/rss/index.xml
+http://feeds.feedburner.com/codinghorror
+http://feeds.feedburner.com/joelonsoftware
+http://martinfowler.com/feed.atom
+http://www.briandupreez.net/feeds/posts/default

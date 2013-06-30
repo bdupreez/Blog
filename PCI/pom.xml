@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <parent>
+        <artifactId>Blog</artifactId>
+        <groupId>Blog</groupId>
+        <version>1.0-SNAPSHOT</version>
+    </parent>
+    <modelVersion>4.0.0</modelVersion>
+
+    <artifactId>PCI</artifactId>
+
+    <dependencies>
+        <dependency>
+               <!-- RSS reader -->
+               <groupId>rome</groupId>
+               <artifactId>rome</artifactId>
+               <version>1.0</version>
+           </dependency>
+           <dependency>
+               <!-- jsoup HTML parser library @ http://jsoup.org/ -->
+               <groupId>org.jsoup</groupId>
+               <artifactId>jsoup</artifactId>
+               <version>1.7.2</version>
+           </dependency>
+           <dependency>
+               <groupId>com.google.guava</groupId>
+               <artifactId>guava</artifactId>
+               <version>14.0.1</version>
+           </dependency>
+           <dependency>
+               <groupId>org.encog</groupId>
+               <artifactId>encog-core</artifactId>
+               <version>3.2.0-SNAPSHOT</version>
+           </dependency>
+           <dependency>
+               <groupId>edu.uci.ics</groupId>
+               <artifactId>crawler4j</artifactId>
+               <version>3.5</version>
+               <type>jar</type>
+               <scope>compile</scope>
+           </dependency>
+           <dependency>
+               <groupId>org.neo4j</groupId>
+               <artifactId>neo4j</artifactId>
+               <version>1.9</version>
+           </dependency>
+           <dependency>
+               <groupId>org.neo4j</groupId>
+                 <artifactId>neo4j-graphviz</artifactId>
+                 <version>1.9</version>
+           </dependency>
+           <dependency>
+               <groupId>com.sun.jersey</groupId>
+               <artifactId>jersey-client</artifactId>
+               <version>1.9</version>
+           </dependency>
+           <dependency>
+               <groupId>org.graphstream</groupId>
+               <artifactId>gs-algo</artifactId>
+               <version>1.1.2</version>
+           </dependency>
+
+    </dependencies>
+
+
+</project>

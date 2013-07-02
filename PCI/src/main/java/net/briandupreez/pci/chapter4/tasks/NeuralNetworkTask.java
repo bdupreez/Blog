@@ -1,7 +1,11 @@
 package net.briandupreez.pci.chapter4.tasks;
 
 
+import com.google.common.collect.Lists;
+import net.briandupreez.pci.chapter4.NodeConstants;
 import net.briandupreez.pci.chapter4.NormalizationFunctions;
+import org.encog.ml.MLMethod;
+import org.encog.ml.MLRegression;
 import org.encog.ml.data.MLData;
 import org.encog.ml.data.MLDataSet;
 import org.encog.ml.data.basic.BasicMLData;
@@ -12,13 +16,14 @@ import org.encog.neural.networks.training.propagation.back.Backpropagation;
 import org.encog.persist.EncogDirectoryPersistence;
 import org.encog.util.simple.EncogUtility;
 import org.neo4j.cypher.javacompat.ExecutionEngine;
+import org.neo4j.cypher.javacompat.ExecutionResult;
+import org.neo4j.graphdb.Node;
 
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.Callable;
 
 /**
@@ -32,11 +37,14 @@ public class NeuralNetworkTask extends SearchTask implements Callable<TaskRespon
     private static final String NETWORK_FILE = "searchterms-network.eg";
     private static final String PATH = "resources/nn/";
 
-    private static int inputNeurons = 4;
-    private static int hiddenNeurons = 6;
-    private static int ouputNeurons = 4;
-    private static final int MAX_EPOCHS = 1000;
-    private static final double ERROR_RATE = 0.01;
+    private static int inputNeurons = 0;
+    private static int hiddenNeurons = 0;
+    private static int ouputNeurons = 0;
+    private static final int MAX_EPOCHS = 20;
+    private static final double ERROR_RATE = 10.0;
+    private static final String[][] trainingStrings = {{"java", "spring"}, {"brian", "ai"},
+            {"java", "python"}, {"i", ".net", "use", "maven"}, {"oracle", "weblogic", "java"},
+            {"the", "last", "ai", "java", "machine", "learning", "network", "agile", "amazon"}};
 
 
     /**
@@ -50,6 +58,7 @@ public class NeuralNetworkTask extends SearchTask implements Callable<TaskRespon
 
     /**
      * Call .. main processing
+     *
      * @return the task response
      * @throws Exception error
      */
@@ -63,7 +72,7 @@ public class NeuralNetworkTask extends SearchTask implements Callable<TaskRespon
             final MLDataSet trainingData = createTrainingData();
             trainedNetwork = train(trainingData);
         } else {
-            trainedNetwork = (BasicNetwork)EncogDirectoryPersistence.loadObject(path.toFile());
+            trainedNetwork = (BasicNetwork) EncogDirectoryPersistence.loadObject(path.toFile());
         }
 
         final MLData inputData = createInputData();
@@ -72,11 +81,18 @@ public class NeuralNetworkTask extends SearchTask implements Callable<TaskRespon
 
         //convert output chapter3 to URL, double
         final Map<String, Double> returnMap = new HashMap<>();
-        returnMap.put("http://www.briandupreez.net/", outputData.getData(0));
-
+        final List<String> allPages = retrieveAllPages();
+        for (int i = 0; i < outputData.size(); i++) {
+            if (outputData.getData(i) == 1.0) {
+                returnMap.put(allPages.get(i), outputData.getData(i));
+            }
+        }
         final TaskResponse response = new TaskResponse();
         response.taskClazz = this.getClass();
-        response.resultMap = NormalizationFunctions.normalizeMap(returnMap, true);
+
+        if (returnMap.size() > 0) {
+            response.resultMap = NormalizationFunctions.normalizeMap(returnMap, true);
+        }
         return response;
 
 
@@ -85,24 +101,25 @@ public class NeuralNetworkTask extends SearchTask implements Callable<TaskRespon
 
     /**
      * Train the neural net
+     *
      * @param dataSet dataset containing
      * @return
      */
     private BasicNetwork train(final MLDataSet dataSet) {
 
-        final BasicNetwork network = EncogUtility.simpleFeedForward(inputNeurons, hiddenNeurons, 0, ouputNeurons, true);
+        final BasicNetwork network = EncogUtility.simpleFeedForward(inputNeurons, new Double(inputNeurons * 1.20).intValue(), 0, ouputNeurons, true);
         final MLTrain train = new Backpropagation(network, dataSet);
 
-        EncogUtility.trainToError(train, ERROR_RATE);
-        EncogUtility.evaluate(network, dataSet);
+
 
         int epoch = 1;
-
         do {
             train.iteration();
             System.out.println("Epoch #" + epoch + " Error:" + train.getError());
             epoch++;
-        } while (epoch < MAX_EPOCHS);
+        } while (epoch < MAX_EPOCHS || train.getError() >= ERROR_RATE);
+
+        EncogUtility.evaluate(network, dataSet);
 
         //persist
         Path path = Paths.get(PATH + NETWORK_FILE);
@@ -120,70 +137,144 @@ public class NeuralNetworkTask extends SearchTask implements Callable<TaskRespon
     }
 
     /**
-     * create training chapter3 for neural net.
+     * create training data for neural net.
      *
-     * @return training chapter3
+     * @return training data
      */
     private MLDataSet createTrainingData() {
 
-        //Get all the words , ordered...
-        final ExecutionEngine engine = new ExecutionEngine(graphDb);
-        final StringBuilder bob = new StringBuilder("START word=node(*)");
-        bob.append("RETURN DISTINCT word");
 
-        engine.execute(bob.toString());
-
-
-        // pick chapter4 terms... mark searched words with 1 others -1
-        final double[][] training = new double[2][4];
-        training[0][0] = -1.0;
-        training[0][1] = 1.0;
-        training[0][2] = 1.0;
-        training[0][3] = -1.0;
-
-        training[1][0] = -1.0;
-        training[1][1] = 1.0;
-        training[1][2] = -1.0;
-        training[1][3] = -1.0;
-
-        //get all the pages, ordered..
-/*        final ExecutionEngine engine = new ExecutionEngine(graphDb);
-        final StringBuilder bob = new StringBuilder("START page=node(*) MATCH (page)-[:CONTAINS]->words ");
-        bob.append("WHERE words.word in [");
-        bob.append(formatArray(searchTerms));
-        bob.append("] ");
-        bob.append("RETURN DISTINCT page");
-
-        engine.execute(bob.toString());*/
-
-
-        //pick page based on words... 1 for clicked -1 for not.
-        final double[][] ideal = new double[2][4];
-        ideal[0][0] = 1.0;
-        ideal[0][1] = -1.0;
-        ideal[0][2] = -1.0;
-        ideal[0][3] = -1.0;
-
-        ideal[1][0] = -1.0;
-        ideal[1][1] = 1.0;
-        ideal[1][2] = -1.0;
-        ideal[1][3] = -1.0;
-
+        final double[][] training = createInputTrainingArray();
+        final double[][] ideal = createTrainingIdeal();
         final MLDataSet dataSet = new BasicMLDataSet(training, ideal);
         return dataSet;
     }
 
+    private double[][] createTrainingIdeal() {
+        //get all the pages...
+        final List<String> allPages = retrieveAllPages();
+        ouputNeurons = allPages.size();
+        final double[][] ideal = new double[6][allPages.size()];
+        int rowInt = 0;
+        for (final String[] trainingTerms : trainingStrings) {
+            final Set<String> uniquePages = retrieveFakeClickedPages(trainingTerms);
+            //pick page based on words... 1 for fake clicked (in this case has terms) -1 for not.
+            for (int colInt = 0; colInt < allPages.size(); colInt++) {
+                if (uniquePages.contains(allPages.get(colInt))) {
+                    ideal[rowInt][colInt] = 1;
+                } else {
+                    ideal[rowInt][colInt] = -1;
+                }
+
+            }
+            rowInt++;
+        }
+        return ideal;
+    }
+
+    private double[][] createInputTrainingArray() {
+        final StringBuilder bob = new StringBuilder("START word=node(*) WHERE HAS(word.word) ");
+        bob.append("RETURN DISTINCT word ORDER BY word.word");
+
+        final ExecutionEngine engine = new ExecutionEngine(graphDb);
+        final ExecutionResult result = engine.execute(bob.toString());
+        final Iterator<Node> wordIterator = result.columnAs("word");
+        final Set<String> uniqueWords = new HashSet<>();
+        while (wordIterator.hasNext()) {
+            uniqueWords.add(wordIterator.next().getProperty(NodeConstants.WORD).toString());
+        }
+
+        // pick search terms... mark searched words with 1 others -1
+        final double[][] training = new double[6][uniqueWords.size()];
+        inputNeurons = uniqueWords.size();
+        int rowInt = 0;
+        for (final String[] trainingTerms : trainingStrings) {
+            final List<String> words = Lists.newArrayList(trainingTerms);
+            int colInt = 0;
+            for (final String uniqueWord : uniqueWords) {
+                if (words.contains(uniqueWord)) {
+                    training[rowInt][colInt] = 1;
+                } else {
+                    training[rowInt][colInt] = -1;
+                }
+                colInt++;
+            }
+            rowInt++;
+        }
+
+        return training;
+    }
+
+    private Set<String> retrieveFakeClickedPages(final String... terms) {
+
+        final StringBuilder bob = new StringBuilder("START page=node(*) MATCH (page)-[:CONTAINS]->words ");
+        bob.append("WHERE words.word in [");
+        bob.append(formatArray(terms));
+        bob.append("] ");
+        bob.append("RETURN DISTINCT page ");
+        bob.append("ORDER BY page.url");
+
+        final ExecutionEngine engine = new ExecutionEngine(graphDb);
+        final ExecutionResult result = engine.execute(bob.toString());
+        final Iterator<Node> pageIterator = result.columnAs("page");
+        final Set<String> uniquePages = new HashSet<>();
+        while (pageIterator.hasNext()) {
+            final Node node = pageIterator.next();
+            uniquePages.add(node.getProperty(NodeConstants.URL).toString());
+        }
+        return uniquePages;
+    }
+
+    private List<String> retrieveAllPages() {
+
+        final ExecutionEngine engine = new ExecutionEngine(graphDb);
+        final StringBuilder bob = new StringBuilder("START page=node(*) ");
+        bob.append("WHERE HAS(page.url) ");
+        bob.append("RETURN DISTINCT page ");
+        bob.append("ORDER BY page.url");
+
+        final ExecutionResult result = engine.execute(bob.toString());
+        Iterator<Node> pageIterator = result.columnAs("page");
+        final List<String> allPages = new ArrayList<>();
+        while (pageIterator.hasNext()) {
+            final Node node = pageIterator.next();
+            allPages.add(node.getProperty(NodeConstants.URL).toString());
+        }
+        return allPages;
+    }
+
     /**
      * Create input data
+     *
      * @return input
      */
     private MLData createInputData() {
 
-        //this.searchTerms;
-        // get all the words...
-
         // mark terms as 1 others as -1
-        final double[] input = {-1, 1, 1, -1};
+        final ExecutionEngine engine = new ExecutionEngine(graphDb);
+        final StringBuilder bob = new StringBuilder("START word=node(*) WHERE HAS(word.word) ");
+        bob.append("RETURN DISTINCT word ORDER BY word.word");
+
+        final ExecutionResult result = engine.execute(bob.toString());
+        final Iterator<Node> wordIterator = result.columnAs("word");
+        final Set<String> uniqueWords = new HashSet<>();
+        while (wordIterator.hasNext()) {
+            uniqueWords.add(wordIterator.next().getProperty(NodeConstants.WORD).toString());
+        }
+
+        // pick search terms... mark searched words with 1 others -1
+        final double[] input = new double[uniqueWords.size()];
+        final List<String> words = Lists.newArrayList(searchTerms);
+        int rowInt = 0;
+        for (final String uniqueWord : uniqueWords) {
+            if (words.contains(uniqueWord)) {
+                input[rowInt] = 1;
+            } else {
+                input[rowInt] = -1;
+            }
+            rowInt++;
+        }
+
 
         final MLData dataSet = new BasicMLData(input);
         return dataSet;

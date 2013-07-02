@@ -66,21 +66,21 @@ public class PageRankTask extends SearchTask implements Callable<TaskResponse> {
 
         final Graph g = new SingleGraph("rank", false, true);
         final Iterator<Node> pageIterator = result.columnAs("related");
-        {
-            while (pageIterator.hasNext()) {
-                final Node node = pageIterator.next();
-                final Iterator<Relationship> relationshipIterator = node.getRelationships().iterator();
-                while (relationshipIterator.hasNext()) {
 
-                    final Relationship relationship = relationshipIterator.next();
-                    final String source = relationship.getProperty(NodeConstants.SOURCE).toString();
-                    uniqueUrls.put(source, 0.0);
-                    final String destination = relationship.getProperty(NodeConstants.DESTINATION).toString();
-                    g.addEdge(String.valueOf(node.getId()), source, destination, true);
+        while (pageIterator.hasNext()) {
+            final Node node = pageIterator.next();
+            final Iterator<Relationship> relationshipIterator = node.getRelationships().iterator();
+            while (relationshipIterator.hasNext()) {
 
-                }
+                final Relationship relationship = relationshipIterator.next();
+                final String source = relationship.getProperty(NodeConstants.SOURCE).toString();
+                uniqueUrls.put(source, 0.0);
+                final String destination = relationship.getProperty(NodeConstants.DESTINATION).toString();
+                g.addEdge(String.valueOf(node.getId()), source, destination, true);
+
             }
         }
+
 
         computeAndSetPageRankScores(uniqueUrls, g);
         return uniqueUrls;
@@ -88,8 +88,9 @@ public class PageRankTask extends SearchTask implements Callable<TaskResponse> {
 
     /**
      * Compute score
+     *
      * @param uniqueUrls urls
-     * @param graph the graph of all links
+     * @param graph      the graph of all links
      */
     private void computeAndSetPageRankScores(final Map<String, Double> uniqueUrls, final Graph graph) {
         final PageRank pr = new PageRank();

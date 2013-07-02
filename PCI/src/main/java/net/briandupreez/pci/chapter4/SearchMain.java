@@ -102,9 +102,13 @@ public class SearchMain {
                 System.out.println("Page Rank: " + MapUtil.entriesSortedByValues(taskResponse.resultMap, false));
                 resultList.add(taskResponse.resultMap);
             } else if (taskResponse.taskClazz.equals(NeuralNetworkTask.class)) {
-                addWeighting(taskResponse.resultMap, 3.0);
-                System.out.println("Neural network Rank: " + MapUtil.entriesSortedByValues(taskResponse.resultMap, false));
-                resultList.add(taskResponse.resultMap);
+                if(taskResponse.resultMap != null){
+                    addWeighting(taskResponse.resultMap, 3.0);
+                    System.out.println("Neural network Rank: " + MapUtil.entriesSortedByValues(taskResponse.resultMap, false));
+                    resultList.add(taskResponse.resultMap);
+                } else {
+                    System.out.println("No NN response.");
+                }
             }
 
         }

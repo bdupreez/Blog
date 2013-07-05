@@ -44,7 +44,7 @@ public class SearchMain {
      */
     private void run(final boolean cleanAndFetch) throws Exception {
 
-        final ExecutorService executorService = Executors.newFixedThreadPool(2);
+        final ExecutorService executorService = Executors.newFixedThreadPool(4);
         try {
             if (cleanAndFetch) {
 

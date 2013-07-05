@@ -32,7 +32,7 @@ public class Neo4JWebCrawler extends WebCrawler {
     @Override
     public boolean shouldVisit(final WebURL url) {
         final String href = url.getURL().toLowerCase();
-        return !NodeConstants.FILTERS.matcher(href).matches(); // && href.startsWith("http://kiwitobes.com/");
+        return !NodeConstants.FILTERS.matcher(href).matches();
     }
 
     /**

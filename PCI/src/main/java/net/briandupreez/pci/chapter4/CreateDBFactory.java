@@ -10,7 +10,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * Double check locking Single instance
+ * Double check locking Singleton
  * User: bdupreez
  * Date: 2013/06/18
  * Time: 11:38 AM

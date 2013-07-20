@@ -1,10 +1,13 @@
 package net.briandupreez.pci.chapter5;
 
 import junit.framework.Assert;
+import org.javatuples.Pair;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Created with IntelliJ IDEA.
@@ -36,6 +39,32 @@ public class TestOptimization {
         double cost = optimization.scheduleCost(optimization.randomOptimize());
         Assert.assertTrue(5285.0 > cost);
         System.out.println("Cost: " + cost);
+
+    }
+
+    @Test
+    public void testHillClimb() throws Exception {
+        final List<Pair<Integer, Integer>> domain = new ArrayList<>(12);
+        for(int i = 0; i < 12; i++){
+            final Pair<Integer, Integer> pair = new Pair<>(0,9);
+           domain.add(pair);
+        }
+        double cost = optimization.scheduleCost(optimization.hillClimb(domain));
+        Assert.assertTrue(5285.0 > cost);
+        System.out.println("Cost: " + cost);
+
+    }
+
+    @Test
+    public void testSimulatedAnnealing() throws Exception {
+        final List<Pair<Integer, Integer>> domain = new ArrayList<>(12);
+        for(int i = 0; i < 12; i++){
+            final Pair<Integer, Integer> pair = new Pair<>(0,9);
+           domain.add(pair);
+        }
+        double cost = optimization.scheduleCost(optimization.simulatedAnealing(domain, 80000.0, 0.989, 2));
+        Assert.assertTrue(5285.0 > cost);
+        System.out.println("Annealing Cost: " + cost);
 
     }
 

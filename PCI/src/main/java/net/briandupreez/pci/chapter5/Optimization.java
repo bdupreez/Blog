@@ -1,6 +1,7 @@
 package net.briandupreez.pci.chapter5;
 
 import com.google.common.io.Resources;
+import org.javatuples.Pair;
 import org.joda.time.LocalTime;
 
 import java.io.BufferedReader;
@@ -77,10 +78,8 @@ public class Optimization {
             final OriginDest destOrigin = new OriginDest(destination, origin);
             final FlightDetails flightDetailsReturning = flights.get(destOrigin).get(schedule[++i]);
 
-
             System.out.println(name + "\t\t" + origin + " " + flightDetailsGoing.depart + "-" + flightDetailsGoing.arrive + " $" + flightDetailsGoing.price +
                     " " + flightDetailsReturning.depart + "-" + flightDetailsReturning.arrive + " $" + flightDetailsReturning.price);
-
 
         }
     }
@@ -161,6 +160,11 @@ public class Optimization {
     }
 
 
+    /**
+     * Random.
+     *
+     * @return the best random result
+     */
     public int[] randomOptimize() {
         double best = 999999999.0;
         int[] bestr = null;
@@ -178,8 +182,118 @@ public class Optimization {
             }
 
         }
-
-
         return bestr;
+    }
+
+
+    /**
+     * Hill Climbing
+     *
+     * @param domain list of tuples with min and max
+     * @return the bottom of the hill (local minimum)
+     */
+    public int[] hillClimb(final List<Pair<Integer, Integer>> domain) {
+        //create random
+        int[] sol = new int[domain.size()];
+        Random random = new Random();
+        for (int r = 0; r < domain.size(); r++) {
+            sol[r] = random.nextInt(8);
+        }
+
+        while (true) {
+            double best;
+
+            final List<int[]> neighbours = new ArrayList<>();
+            for (int j = 0; j < domain.size(); j++) {
+                if (sol[j] > domain.get(j).getValue0() && sol[j] < domain.get(j).getValue1()) {
+                    cloneAndAddToIndex(sol, neighbours, j);
+                    cloneAndMinusAtIndex(sol, neighbours, j);
+                } else if (sol[j] == domain.get(j).getValue0()) {
+                    cloneAndAddToIndex(sol, neighbours, j);
+                } else if (sol[j] == domain.get(j).getValue1()) {
+                    cloneAndMinusAtIndex(sol, neighbours, j);
+                }
+
+            }
+
+            double current = scheduleCost(sol);
+            best = current;
+            for (final int[] neighbour : neighbours) {
+                double cost = scheduleCost(neighbour);
+                if (cost < best) {
+                    best = cost;
+                    sol = neighbour;
+                }
+            }
+
+            if (best == current) {
+                break;
+            }
+
+        }
+
+        return sol;
+    }
+
+    private void cloneAndMinusAtIndex(final int[] sol, final List<int[]> neighbours, final int j) {
+        int[] minArr = sol.clone();
+        minArr[j] -= 1;
+        neighbours.add(minArr);
+    }
+
+    private void cloneAndAddToIndex(final int[] sol, final List<int[]> neighbours, final int j) {
+        int[] addArr = sol.clone();
+        addArr[j] += 1;
+        neighbours.add(addArr);
+    }
+
+    /**
+     * Simulated Annealing
+     *
+     * @param domain list of tuples with min and max
+     * @return (global minimum)
+     */
+    public int[] simulatedAnealing(final List<Pair<Integer, Integer>> domain, final double startingTemp, final double cool, final int step) {
+
+        double temp = startingTemp;
+        //create random
+        int[] sol = new int[domain.size()];
+        Random random = new Random();
+        for (int r = 0; r < domain.size(); r++) {
+            sol[r] = random.nextInt(8);
+        }
+
+        while (temp > 0.1) {
+            //pick a random indices
+            int i = random.nextInt(domain.size() - 1);
+
+            //pick a directions + or -
+            int direction = random.nextInt(step) % 2 == 0 ? -(random.nextInt(step)) : random.nextInt(1);
+
+            int[] cloneSolr = sol.clone();
+            cloneSolr[i] += direction;
+            if (cloneSolr[i] < domain.get(i).getValue0()) {
+                cloneSolr[i] = domain.get(i).getValue0();
+            } else if (cloneSolr[i] > domain.get(i).getValue1()) {
+                cloneSolr[i] = domain.get(i).getValue1();
+            }
+
+            //calc current and new cost
+            double currentCost = scheduleCost(sol);
+            double newCost = scheduleCost(cloneSolr);
+            System.out.println("Current: " + currentCost + " New: " + newCost);
+
+            double probability = Math.pow(Math.E, -(newCost - currentCost) / temp);
+
+            // Is it better, or does it make the probability cutoff?
+            if (newCost < currentCost || random.nextInt() < probability) {
+                sol = cloneSolr;
+            }
+
+            temp = temp * cool;
+
+        }
+
+        return sol;
     }
 }

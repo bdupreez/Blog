@@ -62,9 +62,23 @@ public class TestOptimization {
             final Pair<Integer, Integer> pair = new Pair<>(0,9);
            domain.add(pair);
         }
-        double cost = optimization.scheduleCost(optimization.simulatedAnealing(domain, 80000.0, 0.989, 2));
+        double cost = optimization.scheduleCost(optimization.simulatedAnnealing(domain, 80000.0, 0.989, 2));
         Assert.assertTrue(5285.0 > cost);
         System.out.println("Annealing Cost: " + cost);
+
+    }
+
+    @Test
+    public void testGenetic() throws Exception {
+        final List<Pair<Integer, Integer>> domain = new ArrayList<>(12);
+        for(int i = 0; i < 12; i++){
+            final Pair<Integer, Integer> pair = new Pair<>(0,9);
+           domain.add(pair);
+        }
+        double cost = optimization.scheduleCost(
+                optimization.geneticAlgorithm(domain, 50, 1,0.2, 500, 0.2));
+        Assert.assertTrue(5285.0 > cost);
+        System.out.println("Genetic Cost: " + cost);
 
     }
 

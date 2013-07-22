@@ -350,6 +350,12 @@ public class Optimization {
         return new ArrayList<>(scores.headMap(toKey).values());
     }
 
+    /**
+     * Create a population
+     * @param arraySize the array size
+     * @param popSize the population size
+     * @return a random population
+     */
     private List<int[]> createPopulation(final int arraySize, final int popSize) {
         final List<int[]> returnList = new ArrayList<>();
         for (int i = 0; i < popSize; i++) {

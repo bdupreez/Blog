@@ -32,8 +32,6 @@ public class Classifier {
             e.printStackTrace();
         }
         try {
-            //if In Memory db needed:
-            //connection = DriverManager.getConnection("jdbc:sqlite::memory:");
             connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile);
             if (recreate) {
                 final Statement statement = connection.createStatement();

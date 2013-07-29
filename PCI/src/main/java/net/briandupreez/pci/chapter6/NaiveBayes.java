@@ -30,8 +30,6 @@ public class NaiveBayes extends Classifier {
             e.printStackTrace();
         }
         try {
-            //if In Memory db needed:
-            //Connection connection = DriverManager.getConnection("jdbc:sqlite::memory:");
             connection = DriverManager.getConnection("jdbc:sqlite:" + dbFile);
             if (recreate) {
                 final Statement statement = connection.createStatement();

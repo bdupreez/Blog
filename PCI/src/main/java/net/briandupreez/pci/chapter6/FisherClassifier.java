@@ -6,7 +6,7 @@ import java.sql.Statement;
 import java.util.Map;
 
 /**
- * Created with IntelliJ IDEA.
+ * FisherClassifier.
  * User: bdupreez
  * Date: 2013/07/28
  * Time: 9:39 PM
@@ -48,8 +48,6 @@ public class FisherClassifier extends Classifier {
      */
     @Override
     public double probability(final String feature, final String category) {
-
-
         double clf = super.probability(feature, category);
         if (clf == 0) {
             return 0;
@@ -60,7 +58,6 @@ public class FisherClassifier extends Classifier {
         for (final String cat : categories()) {
             freqSum += super.probability(feature, cat);
         }
-
         //The probability if the frequency in ths category divided by the overall frequency
         return clf / freqSum;
 
@@ -81,8 +78,7 @@ public class FisherClassifier extends Classifier {
         for (final String feature : features.keySet()) {
             docProb *= weightedProbability(feature, category, 1.0, 0.5);
         }
-
-        //This is the chance that it's not in the cat
+        //This is the chance that it's not in the category
         docProb = -2 * Math.log(docProb);
 
         return inverseChi2(docProb, features.size() * 2);
@@ -90,6 +86,10 @@ public class FisherClassifier extends Classifier {
     }
 
 
+    /**
+     * TODO: read up on https://en.wikipedia.org/wiki/Chi-squared_distribution
+     * Why this is needed.
+     */
     public double inverseChi2(final double chi, final double df){
         double m = chi / 2.0;
         double sum = Math.exp(-m);

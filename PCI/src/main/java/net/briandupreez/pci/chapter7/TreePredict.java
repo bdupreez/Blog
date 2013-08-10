@@ -60,57 +60,64 @@ public class TreePredict {
 
     }
 
-    public Pair<List, List> divideSet(final String col, final Object value) {
+    /**
+     * Divide into true and false
+     *
+     * @param rows  the data
+     * @param col   one which column
+     * @param value with value
+     * @return tuple, true and false
+     */
+    @SuppressWarnings("unchecked")
+    public Pair<Object[][], Object[][]> divideSet(final Object[][] rows, final int col, final Object value) {
 
-        final ArrayList trueList = listForColumn(col, value, true);
-        final ArrayList falseList = listForColumn(col, value, false);
-        return new Pair<List, List>(trueList, falseList);
-    }
-
-    private ArrayList listForColumn(String col, Object value, boolean exists) {
-        final ArrayList trueList = new ArrayList();
-        final Statement statement;
-        try {
-            statement = connection.createStatement();
-            String query;
-            String equal = "==";
-            if (!exists) {
-                equal = "!=";
-            }
+        final ArrayList<Object[]> trueList = new ArrayList<>();
+        final ArrayList<Object[]> falseList = new ArrayList<>();
+        //So wished we had lambdas in java
+        /*
+        when trying this with LambdaJ.... lol... ugliest line of java ever... and still didn't work
+       falseList.add(filter(not(having(on(List.class).get(col).toString(), equalTo((String) value))), asList(rows)));
+        */
+        for (final Object[] row : rows) {
             if (value instanceof Integer) {
-                query = String.format("select serviceChosen from userData where %s %s %d", col, equal, (Integer) value);
+                if (((Integer) row[col]) >= ((Integer) value)) {
+                    trueList.add(row);
+                } else {
+                    falseList.add(row);
+                }
             } else {
-                query = String.format("select serviceChosen from userData where %s %s '%s'", col, equal, value);
+                if (row[col].equals(value)) {
+                    trueList.add(row);
+                } else {
+                    falseList.add(row);
+                }
             }
-            statement.setFetchSize(15);
-            ResultSet rs = statement.executeQuery(query);
-            while (rs.next()) {
-                trueList.add(rs.getString(1));
-            }
-            rs.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
 
-        return trueList;
+        Object[][] trueMatrix = new Object[trueList.size()][];
+        trueMatrix = trueList.toArray(trueMatrix);
+
+        Object[][] falseMatrix = new Object[falseList.size()][];
+        falseMatrix = falseList.toArray(falseMatrix);
+
+        return new Pair<>(trueMatrix, falseMatrix);
     }
 
 
-    public Map<String, Integer> uniqueCounts(){
-        final Statement statement;
+    public Map<String, Integer> uniqueCounts(final Object[][] rows) {
+
         final Map<String, Integer> counts = new HashMap<>();
-        try {
-            statement = connection.createStatement();
-            final String query = String.format("SELECT serviceChosen, count(serviceChosen) FROM userData GROUP BY serviceChosen");
-            statement.setFetchSize(15);
-            final ResultSet rs = statement.executeQuery(query);
-            while (rs.next()) {
-                counts.put(rs.getString(1), rs.getInt(2));
+
+        for (final Object[] row : rows) {
+            final String resultVal = (String) row[row.length - 1];
+            if (counts.containsKey(resultVal)) {
+                counts.put(resultVal, counts.get(resultVal) + 1);
+            } else {
+                counts.put(resultVal, 1);
             }
-            rs.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
         }
+
+
         return counts;
     }
 
@@ -121,19 +128,19 @@ public class TreePredict {
      *
      * @return probability
      */
-    public double calculateGiniImpurity() {
+    public double calculateGiniImpurity(final Object[][] rows) {
         final double total = total();
-        final Map<String, Integer> countsMap = uniqueCounts();
+        final Map<String, Integer> countsMap = uniqueCounts(rows);
 
         double prob = 0.0;
         for (Map.Entry<String, Integer> entry : countsMap.entrySet()) {
             double p1 = ((double) entry.getValue()) / total;
             for (Map.Entry<String, Integer> entry2 : countsMap.entrySet()) {
-                if(entry.getKey().equals(entry2.getKey())){
+                if (entry.getKey().equals(entry2.getKey())) {
                     continue;
                 }
                 double p2 = ((double) entry2.getValue()) / total;
-                prob +=p1 * p2;
+                prob += p1 * p2;
             }
         }
 
@@ -146,15 +153,16 @@ public class TreePredict {
      * Harsher of mixed sets.
      * Entropy is the sum of p(x)log(p(x)) across all
      * the different possible results
+     *
      * @return
      */
-    public double calculateEntropy(){
-        final Map<String, Integer> countsMap = uniqueCounts();
+    public double calculateEntropy(final Object[][] rows) {
+        final Map<String, Integer> countsMap = uniqueCounts(rows);
         final double total = total();
         double ent = 0.0;
 
         for (final Map.Entry<String, Integer> entry : countsMap.entrySet()) {
-           double p = (double) entry.getValue() / total;
+            double p = (double) entry.getValue() / total;
             ent = ent - p * (Math.log(p) / Math.log(2));
         }
 
@@ -172,8 +180,8 @@ public class TreePredict {
         try {
             final Statement statement = connection.createStatement();
             statement.setFetchSize(1);
-            final ResultSet rs = statement.executeQuery("select count(serviceChosen)from userData");
-            total = (double)rs.getInt("count(serviceChosen)");
+            final ResultSet rs = statement.executeQuery("SELECT count(serviceChosen)FROM userData");
+            total = (double) rs.getInt("count(serviceChosen)");
             rs.close();
         } catch (final SQLException e) {
             e.printStackTrace();
@@ -181,10 +189,180 @@ public class TreePredict {
         return total;
     }
 
-    public DecisionNode buildTree() {
+    /**
+     * Recursive scoring and building of the tree
+     *
+     * @param rows the data
+     * @return top node
+     */
+    @SuppressWarnings("unchecked")
+    public DecisionNode buildTree(final Object[][] rows) {
 
+        double currentScore = calculateEntropy(rows);
 
-        return new DecisionNode();
+        double bestGain = 0.0;
+        Pair<Integer, Object> bestCriteria = null;
+        Pair<Object[][], Object[][]> bestSets = null;
 
+        for (int col = 0; col < rows[0].length - 1; col++) {
+            //generate a list of different values in the column
+            List columnValues = new ArrayList();
+            for (final Object[] row : rows) {
+                columnValues.add(row[col]);
+            }
+            //then try divideSet for each value
+            for (final Object columnValue : columnValues) {
+                final Pair<Object[][], Object[][]> pair = divideSet(rows, col, columnValue);
+                //check the gain
+                double p = ((double) pair.getValue0().length) / rows.length;
+                double gain = currentScore - (p * calculateEntropy(pair.getValue0()) - ((1 - p) * calculateEntropy(pair.getValue1())));
+                if (gain > bestGain && pair.getValue0().length > 0 && pair.getValue1().length > 0) {
+                    bestGain = gain;
+                    bestCriteria = new Pair(col, columnValue);
+                    bestSets = pair;
+                }
+            }
+
+        }
+        if (bestGain > 0 && bestSets != null) {
+            final DecisionNode trueBranch = buildTree(bestSets.getValue0());
+            final DecisionNode falseBranch = buildTree(bestSets.getValue1());
+            final DecisionNode returnNode = new DecisionNode();
+            returnNode.setCol(bestCriteria.getValue0());
+            returnNode.setValue(bestCriteria.getValue1());
+            returnNode.setTrueBranch(trueBranch);
+            returnNode.setFalseBranch(falseBranch);
+            return returnNode;
+        } else {
+            final DecisionNode returnNode = new DecisionNode();
+            returnNode.setResults(uniqueCounts(rows));
+            return returnNode;
+        }
     }
+
+
+    /**
+     * Print to console. recursive
+     *
+     * @param node   the node
+     * @param indent the indent
+     */
+    public void printTree(final DecisionNode node, final String indent) {
+        if (node.getResults() != null) {
+            System.out.println(node.getResults());
+        } else {
+            System.out.println(node.getCol() + ":" + node.getValue().toString() + "? ");
+            System.out.print(indent + "T->");
+            printTree(node.getTrueBranch(), indent + "\t");
+            System.out.print(indent + "F->");
+            printTree(node.getFalseBranch(), indent + "\t");
+        }
+    }
+
+
+    /**
+     * get teh data a matrix
+     *
+     * @return matrix
+     */
+    public Object[][] retrieveDataAsMatrix() {
+
+        final Object[][] arrays = new Object[16][5];
+        try {
+            final Statement statement = connection.createStatement();
+            final ResultSet rs = statement.executeQuery("SELECT * FROM userData");
+            int i = 0;
+            while (rs.next()) {
+                arrays[i][0] = rs.getString(1);
+                arrays[i][1] = rs.getString(2);
+                arrays[i][2] = rs.getString(3);
+                arrays[i][3] = rs.getInt(4);
+                arrays[i][4] = rs.getString(5);
+                i++;
+            }
+            rs.close();
+        } catch (final SQLException e) {
+            e.printStackTrace();
+        }
+
+        return arrays;
+    }
+
+
+    /**
+     * Classify new data.
+     *
+     * @param row  the data (minus the result)
+     * @param tree the trained tree
+     * @return the result based on teh tree
+     */
+    public Map<String, Integer> classify(final Object[] row, final DecisionNode tree) {
+        if (tree.getResults() != null) {
+            return tree.getResults();
+        } else {
+            final Object value = row[tree.getCol()];
+            DecisionNode branch = null;
+            if (value instanceof Integer) {
+                if ((Integer) value >= (Integer) tree.getValue()) {
+                    branch = tree.getTrueBranch();
+                } else {
+                    branch = tree.getFalseBranch();
+                }
+            } else {
+                if (value.toString().equals(tree.getValue().toString())) {
+                    branch = tree.getTrueBranch();
+                } else {
+                    branch = tree.getFalseBranch();
+                }
+            }
+            return classify(row, branch);
+        }
+    }
+
+    public void prune(final DecisionNode tree, final double minGain) {
+        //if branches aren't leaves remove them.
+        if (tree.getTrueBranch().getResults() == null) {
+            prune(tree.getTrueBranch(), minGain);
+        }
+        if (tree.getFalseBranch().getResults() == null) {
+            prune(tree.getFalseBranch(), minGain);
+        }
+
+        //id both the branches are leaves, can we merge them
+        if (tree.getTrueBranch().getResults() != null && tree.getFalseBranch().getResults() != null) {
+
+            final ArrayList<Object[]> trueList = new ArrayList<>();
+            for (Map.Entry<String, Integer> entry : tree.getTrueBranch().getResults().entrySet()) {
+                for(int i = 0; i < entry.getValue(); i++){
+                    trueList.add(new Object[]{entry.getKey()});
+                }
+            }
+            Object[][] trueMatrix = new Object[trueList.size()][];
+            trueMatrix = trueList.toArray(trueMatrix);
+
+            final ArrayList<Object[]> falseList = new ArrayList<>();
+            for (Map.Entry<String, Integer> entry : tree.getFalseBranch().getResults().entrySet()) {
+                for(int i = 0; i < entry.getValue(); i++){
+                    falseList.add(new Object[]{entry.getKey()});
+                }
+            }
+            Object[][] falseMatrix = new Object[falseList.size()][];
+            falseMatrix = falseList.toArray(falseMatrix);
+
+            Object[][] combined = new Object[falseList.size()+ trueList.size()][];
+            System.arraycopy(trueMatrix,0,combined,0,trueList.size());
+            System.arraycopy(falseMatrix,0,combined,trueList.size(), falseList.size());
+
+            double delta = calculateEntropy(combined) - (calculateEntropy(trueMatrix) + calculateEntropy(falseMatrix) / 2);
+
+            if(delta < minGain){
+                tree.setFalseBranch(null);
+                tree.setTrueBranch(null);
+                tree.setResults(uniqueCounts(combined));
+            }
+
+        }
+    }
+
+
 }

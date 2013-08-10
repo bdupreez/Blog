@@ -11,8 +11,8 @@ import java.util.Map;
 public class DecisionNode {
 
     private Integer col;
-    private Double value;
-    private Map<DecisionNode, Integer> results;
+    private Object value;
+    private Map<String, Integer> results;
     private DecisionNode trueBranch;
     private DecisionNode falseBranch;
 
@@ -24,19 +24,19 @@ public class DecisionNode {
         this.col = col;
     }
 
-    public Double getValue() {
+    public Object getValue() {
         return value;
     }
 
-    public void setValue(Double value) {
+    public void setValue(Object value) {
         this.value = value;
     }
 
-    public Map<DecisionNode, Integer> getResults() {
+    public Map<String, Integer> getResults() {
         return results;
     }
 
-    public void setResults(Map<DecisionNode, Integer> results) {
+    public void setResults(Map<String, Integer> results) {
         this.results = results;
     }
 

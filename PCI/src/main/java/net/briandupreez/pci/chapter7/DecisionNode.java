@@ -12,7 +12,7 @@ public class DecisionNode {
 
     private Integer col;
     private Object value;
-    private Map<String, Integer> results;
+    private Map<String, Double> results;
     private DecisionNode trueBranch;
     private DecisionNode falseBranch;
 
@@ -32,11 +32,11 @@ public class DecisionNode {
         this.value = value;
     }
 
-    public Map<String, Integer> getResults() {
+    public Map<String, Double> getResults() {
         return results;
     }
 
-    public void setResults(Map<String, Integer> results) {
+    public void setResults(Map<String, Double> results) {
         this.results = results;
     }
 

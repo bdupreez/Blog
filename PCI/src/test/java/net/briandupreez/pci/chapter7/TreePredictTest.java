@@ -26,7 +26,7 @@ public class TreePredictTest {
 
     @Test
     public void testUniqueCounts() throws Exception {
-        final Map<String, Integer> stringIntegerMap = treePredict.uniqueCounts(treePredict.retrieveDataAsMatrix());
+        final Map<String, Double> stringIntegerMap = treePredict.uniqueCounts(treePredict.retrieveDataAsMatrix());
         System.out.println(stringIntegerMap);
         Assert.assertEquals(3, stringIntegerMap.size());
 
@@ -56,14 +56,22 @@ public class TreePredictTest {
        final DecisionNode decisionNode = treePredict.buildTree(treePredict.retrieveDataAsMatrix());
        Assert.assertNotNull(decisionNode);
         treePredict.printTree(decisionNode, " ");
-        treePredict.prune(decisionNode, 0.1);
-        treePredict.printTree(decisionNode, " ");
+        //treePredict.prune(decisionNode, 0.1);
+       // treePredict.printTree(decisionNode, " ");
     }
 
     @Test
     public void testClassify() throws Exception {
         final DecisionNode decisionNode = treePredict.buildTree(treePredict.retrieveDataAsMatrix());
-        final Map<String, Integer> classify = treePredict.classify(new Object[]{"(direct)", "USA", "yes", 5}, decisionNode);
+        final Map<String, Double> classify = treePredict.classify(new Object[]{"(direct)", "USA", "yes", 5}, decisionNode);
+        System.out.println(classify);
+    }
+
+
+    @Test
+    public void testMissingDataClassify() throws Exception {
+        final DecisionNode decisionNode = treePredict.buildTree(treePredict.retrieveDataAsMatrix());
+        final Map<String, Double> classify = treePredict.missingDataClassify(new Object[]{"google", "France", null, null}, decisionNode);
         System.out.println(classify);
     }
 

@@ -4,10 +4,7 @@ package net.briandupreez.pci.chapter7;
 import org.javatuples.Pair;
 
 import java.sql.*;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * TreePredict.
@@ -104,16 +101,16 @@ public class TreePredict {
     }
 
 
-    public Map<String, Integer> uniqueCounts(final Object[][] rows) {
+    public Map<String, Double> uniqueCounts(final Object[][] rows) {
 
-        final Map<String, Integer> counts = new HashMap<>();
+        final Map<String, Double> counts = new HashMap<>();
 
         for (final Object[] row : rows) {
             final String resultVal = (String) row[row.length - 1];
             if (counts.containsKey(resultVal)) {
                 counts.put(resultVal, counts.get(resultVal) + 1);
             } else {
-                counts.put(resultVal, 1);
+                counts.put(resultVal, 1.0);
             }
         }
 
@@ -130,16 +127,16 @@ public class TreePredict {
      */
     public double calculateGiniImpurity(final Object[][] rows) {
         final double total = total();
-        final Map<String, Integer> countsMap = uniqueCounts(rows);
+        final Map<String, Double> countsMap = uniqueCounts(rows);
 
         double prob = 0.0;
-        for (Map.Entry<String, Integer> entry : countsMap.entrySet()) {
-            double p1 = ((double) entry.getValue()) / total;
-            for (Map.Entry<String, Integer> entry2 : countsMap.entrySet()) {
+        for (Map.Entry<String, Double> entry : countsMap.entrySet()) {
+            double p1 = entry.getValue() / total;
+            for (Map.Entry<String, Double> entry2 : countsMap.entrySet()) {
                 if (entry.getKey().equals(entry2.getKey())) {
                     continue;
                 }
-                double p2 = ((double) entry2.getValue()) / total;
+                double p2 = (entry2.getValue()) / total;
                 prob += p1 * p2;
             }
         }
@@ -157,13 +154,11 @@ public class TreePredict {
      * @return
      */
     public double calculateEntropy(final Object[][] rows) {
-        final Map<String, Integer> countsMap = uniqueCounts(rows);
-        final double total = total();
+        final Map<String, Double> countsMap = uniqueCounts(rows);
         double ent = 0.0;
-
-        for (final Map.Entry<String, Integer> entry : countsMap.entrySet()) {
-            double p = (double) entry.getValue() / total;
-            ent = ent - p * (Math.log(p) / Math.log(2));
+        for (final Map.Entry<String, Double> entry : countsMap.entrySet()) {
+            double p = entry.getValue() / rows.length;
+            ent += -p * (Math.log(p) / Math.log(2));
         }
 
         return ent;
@@ -206,16 +201,16 @@ public class TreePredict {
 
         for (int col = 0; col < rows[0].length - 1; col++) {
             //generate a list of different values in the column
-            List columnValues = new ArrayList();
+            Map<String, Integer> columnValues = new TreeMap<>();
             for (final Object[] row : rows) {
-                columnValues.add(row[col]);
+                columnValues.put(row[col].toString(), 1);
             }
             //then try divideSet for each value
-            for (final Object columnValue : columnValues) {
+            for (final Object columnValue : columnValues.keySet()) {
                 final Pair<Object[][], Object[][]> pair = divideSet(rows, col, columnValue);
                 //check the gain
                 double p = ((double) pair.getValue0().length) / rows.length;
-                double gain = currentScore - (p * calculateEntropy(pair.getValue0()) - ((1 - p) * calculateEntropy(pair.getValue1())));
+                double gain = currentScore - p * calculateEntropy(pair.getValue0()) - ((1 - p) * calculateEntropy(pair.getValue1()));
                 if (gain > bestGain && pair.getValue0().length > 0 && pair.getValue1().length > 0) {
                     bestGain = gain;
                     bestCriteria = new Pair(col, columnValue);
@@ -296,7 +291,7 @@ public class TreePredict {
      * @param tree the trained tree
      * @return the result based on teh tree
      */
-    public Map<String, Integer> classify(final Object[] row, final DecisionNode tree) {
+    public Map<String, Double> classify(final Object[] row, final DecisionNode tree) {
         if (tree.getResults() != null) {
             return tree.getResults();
         } else {
@@ -319,6 +314,73 @@ public class TreePredict {
         }
     }
 
+
+    /**
+     * Classify with missing data
+     *
+     * @param observation the input
+     * @param tree        the tree
+     * @return a map with all probabilities from missing data
+     */
+    public Map<String, Double> missingDataClassify(final Object[] observation, final DecisionNode tree) {
+
+        if (tree.getResults() != null) {
+            return tree.getResults();
+        } else {
+            final Object value = observation[tree.getCol()];
+            if (value == null) {
+                final Map<String, Double> trueResult = missingDataClassify(observation, tree.getTrueBranch());
+                final Map<String, Double> falseResult = missingDataClassify(observation, tree.getFalseBranch());
+                double trueCount = 0.0;
+                for (final Double tv : trueResult.values()) {
+                    trueCount += tv;
+                }
+                double falseCount = 0.0;
+                for (final Double fv : falseResult.values()) {
+                    falseCount += fv;
+                }
+                double trueWeight = trueCount / (trueCount + falseCount);
+                double falseWeight = falseCount / (trueCount + falseCount);
+                final Map<String, Double> reslt = new HashMap<>();
+                for (Map.Entry<String, Double> trueEntry : trueResult.entrySet()) {
+                    reslt.put(trueEntry.getKey(), trueEntry.getValue() * trueWeight);
+                }
+
+                for (Map.Entry<String, Double> falseEntry : falseResult.entrySet()) {
+                    reslt.put(falseEntry.getKey(), falseEntry.getValue() * falseWeight);
+                }
+
+                return reslt;
+
+            } else {
+                DecisionNode branch = null;
+                if (value instanceof Integer) {
+                    if ((Integer) value >= (Integer) tree.getValue()) {
+                        branch = tree.getTrueBranch();
+                    } else {
+                        branch = tree.getFalseBranch();
+                    }
+                } else {
+                    if (value.toString().equals(tree.getValue().toString())) {
+                        branch = tree.getTrueBranch();
+                    } else {
+                        branch = tree.getFalseBranch();
+                    }
+                }
+                return missingDataClassify(observation, branch);
+            }
+        }
+
+
+    }
+
+    /**
+     * Trim down nodes with delta less than min gain.
+     * recursive
+     *
+     * @param tree    the node
+     * @param minGain minimum gain
+     */
     public void prune(final DecisionNode tree, final double minGain) {
         //if branches aren't leaves remove them.
         if (tree.getTrueBranch().getResults() == null) {
@@ -332,8 +394,8 @@ public class TreePredict {
         if (tree.getTrueBranch().getResults() != null && tree.getFalseBranch().getResults() != null) {
 
             final ArrayList<Object[]> trueList = new ArrayList<>();
-            for (Map.Entry<String, Integer> entry : tree.getTrueBranch().getResults().entrySet()) {
-                for(int i = 0; i < entry.getValue(); i++){
+            for (final Map.Entry<String, Double> entry : tree.getTrueBranch().getResults().entrySet()) {
+                for (int i = 0; i < entry.getValue(); i++) {
                     trueList.add(new Object[]{entry.getKey()});
                 }
             }
@@ -341,21 +403,21 @@ public class TreePredict {
             trueMatrix = trueList.toArray(trueMatrix);
 
             final ArrayList<Object[]> falseList = new ArrayList<>();
-            for (Map.Entry<String, Integer> entry : tree.getFalseBranch().getResults().entrySet()) {
-                for(int i = 0; i < entry.getValue(); i++){
+            for (final Map.Entry<String, Double> entry : tree.getFalseBranch().getResults().entrySet()) {
+                for (int i = 0; i < entry.getValue(); i++) {
                     falseList.add(new Object[]{entry.getKey()});
                 }
             }
             Object[][] falseMatrix = new Object[falseList.size()][];
             falseMatrix = falseList.toArray(falseMatrix);
 
-            Object[][] combined = new Object[falseList.size()+ trueList.size()][];
-            System.arraycopy(trueMatrix,0,combined,0,trueList.size());
-            System.arraycopy(falseMatrix,0,combined,trueList.size(), falseList.size());
+            final Object[][] combined = new Object[falseList.size() + trueList.size()][];
+            System.arraycopy(trueMatrix, 0, combined, 0, trueList.size());
+            System.arraycopy(falseMatrix, 0, combined, trueList.size(), falseList.size());
 
-            double delta = calculateEntropy(combined) - (calculateEntropy(trueMatrix) + calculateEntropy(falseMatrix) / 2);
+            double delta = calculateEntropy(combined) - (calculateEntropy(trueMatrix) + calculateEntropy(falseMatrix)) / 2;
 
-            if(delta < minGain){
+            if (delta < minGain) {
                 tree.setFalseBranch(null);
                 tree.setTrueBranch(null);
                 tree.setResults(uniqueCounts(combined));

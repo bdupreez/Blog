@@ -1,9 +1,7 @@
 
 package net.briandupreez.pci.chapter8;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * EuclideanDistanceScore.
@@ -12,7 +10,6 @@ import java.util.Map;
  * Time: 4:27 PM
  */
 public class EuclideanDistanceScore {
-
 
 
     /**

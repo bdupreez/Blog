@@ -11,6 +11,7 @@
     <modules>
         <module>PCI</module>
         <module>General-ML-AI</module>
+        <module>BYGSearch</module>
     </modules>
 
 

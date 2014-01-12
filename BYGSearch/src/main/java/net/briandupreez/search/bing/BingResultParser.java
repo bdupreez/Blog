@@ -42,6 +42,12 @@ public class BingResultParser implements SearchResultParser {
        return response;
     }
 
+    /**
+     * Parse Synonym results
+     * @param searchTerm search
+     * @param synonymResults results
+     * @return populated results
+     */
     public SearchSynonymResults parseSynonym(final String searchTerm, final String synonymResults){
 
         final ObjectMapper mapper = new ObjectMapper();

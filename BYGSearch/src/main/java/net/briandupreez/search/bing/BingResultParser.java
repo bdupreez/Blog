@@ -3,11 +3,12 @@ package net.briandupreez.search.bing;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+
 import net.briandupreez.search.SearchResult;
 import net.briandupreez.search.SearchResultParser;
 import net.briandupreez.search.SearchResults;
 import net.briandupreez.search.SearchSynonymResults;
-
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
@@ -16,6 +17,8 @@ import java.io.IOException;
  * Created by Brian on 2014/01/04.
  */
 public class BingResultParser implements SearchResultParser {
+
+    private static final Logger log = Logger.getLogger(BingResultParser.class);
 
     @Override
     public SearchResults parseWeb(final String searchTerm, final String searchResults){
@@ -36,18 +39,13 @@ public class BingResultParser implements SearchResultParser {
             }
 
         } catch (final IOException e) {
-            e.printStackTrace();
+            log.error("Parser Error", e);
+            throw new RuntimeException("Result Parser Failure", e);
         }
 
-       return response;
+        return response;
     }
 
-    /**
-     * Parse Synonym results
-     * @param searchTerm search
-     * @param synonymResults results
-     * @return populated results
-     */
     public SearchSynonymResults parseSynonym(final String searchTerm, final String synonymResults){
 
         final ObjectMapper mapper = new ObjectMapper();
@@ -61,7 +59,8 @@ public class BingResultParser implements SearchResultParser {
             }
 
         } catch (final IOException e) {
-            e.printStackTrace();
+            log.error("Parser Error", e);
+            throw new RuntimeException("Result Parser Failure", e);
         }
 
         return response;

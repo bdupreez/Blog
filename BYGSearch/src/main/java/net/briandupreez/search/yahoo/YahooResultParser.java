@@ -6,6 +6,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import net.briandupreez.search.SearchResult;
 import net.briandupreez.search.SearchResultParser;
 import net.briandupreez.search.SearchResults;
+import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
@@ -14,6 +15,9 @@ import java.io.IOException;
  * Created by Brian on 2014/01/04.
  */
 public class YahooResultParser implements SearchResultParser {
+
+    private static final Logger log = Logger.getLogger(YahooResultParser.class);
+
 
     @Override
     public SearchResults parseWeb(final String searchTerm, final String searchResults){
@@ -36,10 +40,11 @@ public class YahooResultParser implements SearchResultParser {
             }
 
         } catch (final IOException e) {
-            e.printStackTrace();
+            log.error("Parser Error", e);
+            throw new RuntimeException("Result Parser Failure", e);
         }
 
-       return response;
+        return response;
     }
 
 }

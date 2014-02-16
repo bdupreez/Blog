@@ -12,6 +12,7 @@
         <module>PCI</module>
         <module>General-ML-AI</module>
         <module>BYGSearch</module>
+        <module>SolrSpringData</module>
     </modules>
 
 

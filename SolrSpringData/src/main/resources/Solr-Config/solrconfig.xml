@@ -1,0 +1,56 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<config>
+	<luceneMatchVersion>4.6</luceneMatchVersion>
+	<lib dir="/Development/Solr/lib" regex="solr-dataimporthandler-.*\.jar" />
+	<directoryFactory name="DirectoryFactory" class="${solr.directoryFactory:solr.StandardDirectoryFactory}"/>
+
+	<dataDir>${solr.wikipedia.data.dir:/Development/Data/solr_data/wikipedia}</dataDir>
+
+	<schemaFactory class="ClassicIndexSchemaFactory"/>
+
+	<updateHandler class="solr.DirectUpdateHandler2">
+		<updateLog>
+			<str name="dir">${solr.wikipedia.data.dir:}</str>
+		</updateLog>
+	</updateHandler>
+
+	<requestHandler name="/get" class="solr.RealTimeGetHandler">
+		<lst name="defaults">
+			<str name="omitHeader">true</str>
+		</lst>
+	</requestHandler>  
+
+	<requestHandler name="/replication" class="solr.ReplicationHandler" startup="lazy" /> 
+
+	<requestDispatcher handleSelect="true" >
+		<requestParsers enableRemoteStreaming="false" multipartUploadLimitInKB="2048" formdataUploadLimitInKB="2048" />
+	</requestDispatcher>
+
+	<requestHandler name="standard" class="solr.StandardRequestHandler" default="true" />
+	<requestHandler name="/analysis/field" startup="lazy" class="solr.FieldAnalysisRequestHandler" />
+	<requestHandler name="/update" class="solr.UpdateRequestHandler"  />
+	<requestHandler name="/admin/" class="org.apache.solr.handler.admin.AdminHandlers" />
+
+	<requestHandler name="/admin/ping" class="solr.PingRequestHandler">
+		<lst name="invariants">
+			<str name="q">solrpingquery</str>
+		</lst>
+		<lst name="defaults">
+			<str name="echoParams">all</str>
+		</lst>
+	</requestHandler>
+
+	<requestHandler name="/dataimport" class="org.apache.solr.handler.dataimport.DataImportHandler">
+		<lst name="defaults">
+			<str name="config">data-config.xml</str>
+		</lst>
+	</requestHandler>
+
+	<admin>
+		<defaultQuery>*:*</defaultQuery>
+	</admin>
+
+	<unlockOnStartup>true</unlockOnStartup>
+
+</config>
+

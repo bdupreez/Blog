@@ -26,6 +26,10 @@ public class SolrContext {
     @Resource
     private Environment environment;
 
+    /**
+     * Solr Factory bean
+     * @return factory bean
+     */
     @Bean
     public HttpSolrServerFactoryBean solrServerFactoryBean() {
         final HttpSolrServerFactoryBean factory = new HttpSolrServerFactoryBean();
@@ -33,6 +37,11 @@ public class SolrContext {
         return factory;
     }
 
+    /**
+     * The Solr Template... used in WikipediaDocumentRepository.
+     * @return created template
+     * @throws Exception error.
+     */
     @Bean
     public SolrTemplate solrTemplate() throws Exception {
         return new SolrTemplate(solrServerFactoryBean().getObject());

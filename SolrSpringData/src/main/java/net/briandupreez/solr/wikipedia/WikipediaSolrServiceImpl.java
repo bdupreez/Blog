@@ -56,7 +56,7 @@ public class WikipediaSolrServiceImpl implements WikipediaSolrService {
         return wikipediaDocument;
     }
 
-
+    @Transactional(readOnly = true)
     @Override
     public Collection<WikipediaDocument> findByTitleContains(final String title) {
         return repository.findByTitleContains(title);

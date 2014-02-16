@@ -1,0 +1,26 @@
+<?xml version="1.0" ?>
+<schema name="wikipediaCore" version="1.1">
+    <types>
+
+        <fieldtype name="string"  class="solr.StrField" sortMissingLast="true" omitNorms="true"/>
+        <fieldType name="long" class="solr.TrieLongField" precisionStep="0" positionIncrementGap="0"/>
+        <fieldType name="pint" class="solr.IntField"/>
+        <fieldType name="text_en" class="solr.TextField" positionIncrementGap="100"/>
+        <fieldType name="date" class="solr.TrieDateField" precisionStep="0" positionIncrementGap="0"/>
+    </types>
+
+    <fields>
+        <field name="id"        type="string"  indexed="true" stored="true" required="true"/>
+        <field name="title"     type="string"  indexed="true" stored="true"/>
+        <field name="revision"  type="pint"    indexed="false" stored="false"/>
+        <field name="user"      type="string"  indexed="false" stored="true"/>
+        <field name="userId"    type="pint"     indexed="false" stored="true"/>
+        <field name="text"      type="text_en"  indexed="true" stored="true"/>
+        <field name="timestamp" type="date"    indexed="false" stored="true"/>
+        <field name="_version_" type="long" indexed="true" stored="true"/>
+    </fields>
+
+    <uniqueKey>id</uniqueKey>
+    <defaultSearchField>title</defaultSearchField>
+    <solrQueryParser defaultOperator="OR"/>
+</schema>

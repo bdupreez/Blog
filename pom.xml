@@ -13,6 +13,7 @@
         <module>General-ML-AI</module>
         <module>BYGSearch</module>
         <module>SolrSpringData</module>
+        <module>Java8Musings</module>
     </modules>
 
 
